@@ -3,7 +3,7 @@ import * as Tone from 'tone';
 import { Box, Button, VStack, HStack, Text, Slider, SliderTrack, SliderFilledTrack, SliderThumb } from '@chakra-ui/react';
 import { FaPlay, FaStop, FaRecordVinyl, FaPause } from 'react-icons/fa';
 
-const Sequencer = ({ tracks, playheadPosition }) => {
+const Sequencer = ({ tracks, playheadPosition, handleMouseDown, handleMouseMove, handleMouseUp }) => {
   return (
     <Box>
       {tracks.map((track, index) => (
@@ -22,6 +22,9 @@ const Sequencer = ({ tracks, playheadPosition }) => {
               bg="red"
               transform="translateX(-50%)"
               transition="left 0.1s linear"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
             />
           </HStack>
         </Box>
@@ -39,6 +42,7 @@ const VirtualInstrument = ({ instrumentType }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [bpm, setBpm] = useState(120);
   const [playheadPosition, setPlayheadPosition] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const metronome = useRef(null);
   const playheadInterval = useRef(null);
 
@@ -209,6 +213,35 @@ const VirtualInstrument = ({ instrumentType }) => {
     clearInterval(playheadInterval.current);
   };
 
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      const rect = e.target.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const newPlayheadPosition = x / rect.width;
+      setPlayheadPosition(newPlayheadPosition);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    const handleMouseUpGlobal = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener('mouseup', handleMouseUpGlobal);
+
+    return () => {
+      window.removeEventListener('mouseup', handleMouseUpGlobal);
+    };
+  }, []);
+
   return (
     <VStack spacing={4}>
       <HStack spacing={2}>
@@ -221,7 +254,7 @@ const VirtualInstrument = ({ instrumentType }) => {
           <Button key={note} onClick={() => playNote(note)}>{note}</Button>
         ))}
       </HStack>
-      <Sequencer tracks={recordedNotes} playheadPosition={playheadPosition} />
+      <Sequencer tracks={recordedNotes} playheadPosition={playheadPosition} handleMouseDown={handleMouseDown} handleMouseMove={handleMouseMove} handleMouseUp={handleMouseUp} />
       <HStack spacing={2}>
         <Button onClick={isPlaying ? (isPaused ? startMetronome : pauseMetronome) : startMetronome} colorScheme="blue">
           {isPlaying ? (isPaused ? 'Resume Metronome' : 'Pause Metronome') : 'Start Metronome'}
