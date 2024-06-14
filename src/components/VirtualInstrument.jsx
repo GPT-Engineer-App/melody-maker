@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
-import { Box, Button, VStack, HStack, Text } from '@chakra-ui/react';
+import { Box, Button, VStack, HStack, Text, Slider, SliderTrack, SliderFilledTrack, SliderThumb } from '@chakra-ui/react';
 import { FaPlay, FaStop, FaRecordVinyl } from 'react-icons/fa';
 
 const Sequencer = ({ tracks }) => {
@@ -25,6 +25,9 @@ const VirtualInstrument = ({ instrumentType }) => {
   const [recordedNotes, setRecordedNotes] = useState([]);
   const [currentTrack, setCurrentTrack] = useState([]);
   const [synth, setSynth] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [bpm, setBpm] = useState(120);
+  const metronome = useRef(null);
 
   useEffect(() => {
     if (instrumentType === 'piano') {
@@ -159,6 +162,22 @@ const VirtualInstrument = ({ instrumentType }) => {
     }
   };
 
+  const startMetronome = () => {
+    if (!metronome.current) {
+      metronome.current = new Tone.Loop(time => {
+        new Tone.MembraneSynth().toDestination().triggerAttackRelease("C2", "8n", time);
+      }, "4n").start(0);
+    }
+    Tone.Transport.bpm.value = bpm;
+    Tone.Transport.start();
+    setIsPlaying(true);
+  };
+
+  const stopMetronome = () => {
+    Tone.Transport.stop();
+    setIsPlaying(false);
+  };
+
   return (
     <VStack spacing={4}>
       <HStack spacing={2}>
@@ -172,6 +191,18 @@ const VirtualInstrument = ({ instrumentType }) => {
         ))}
       </HStack>
       <Sequencer tracks={recordedNotes} />
+      <HStack spacing={2}>
+        <Button onClick={isPlaying ? stopMetronome : startMetronome} colorScheme="blue">
+          {isPlaying ? 'Stop Metronome' : 'Start Metronome'}
+        </Button>
+        <Slider aria-label="bpm-slider" defaultValue={120} min={60} max={200} onChange={(val) => setBpm(val)}>
+          <SliderTrack>
+            <SliderFilledTrack />
+          </SliderTrack>
+          <SliderThumb />
+        </Slider>
+        <Text>{bpm} BPM</Text>
+      </HStack>
     </VStack>
   );
 };
