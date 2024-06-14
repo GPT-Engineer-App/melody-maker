@@ -1,5 +1,6 @@
 import { Container, VStack, Heading, Text, Button, Box, HStack, IconButton } from "@chakra-ui/react";
-import { FaDrum, FaGuitar, FaPiano, FaSave } from "react-icons/fa";
+import { FaDrum, FaGuitar, FaSave } from "react-icons/fa";
+import { GiPianoKeys } from "react-icons/gi";
 
 const Index = () => {
   return (
@@ -11,7 +12,7 @@ const Index = () => {
         <HStack spacing={4}>
           <IconButton aria-label="Play Drums" icon={<FaDrum />} size="lg" />
           <IconButton aria-label="Play Guitar" icon={<FaGuitar />} size="lg" />
-          <IconButton aria-label="Play Piano" icon={<FaPiano />} size="lg" />
+          <IconButton aria-label="Play Piano" icon={<GiPianoKeys />} size="lg" />
         </HStack>
         
         <Box width="100%" height="300px" bg="gray.100" borderRadius="md" display="flex" justifyContent="center" alignItems="center">
