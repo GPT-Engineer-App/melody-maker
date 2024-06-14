@@ -3,9 +3,27 @@ import * as Tone from 'tone';
 import { Box, Button, VStack, HStack, Text } from '@chakra-ui/react';
 import { FaPlay, FaStop, FaRecordVinyl } from 'react-icons/fa';
 
+const Sequencer = ({ tracks }) => {
+  return (
+    <Box>
+      {tracks.map((track, index) => (
+        <Box key={index} border="1px solid black" p={2} mb={2}>
+          <Text>Track {index + 1}</Text>
+          <HStack>
+            {track.map((note, noteIndex) => (
+              <Box key={noteIndex} w="20px" h="20px" bg={note ? 'blue' : 'gray'} />
+            ))}
+          </HStack>
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 const VirtualInstrument = ({ instrumentType }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedNotes, setRecordedNotes] = useState([]);
+  const [currentTrack, setCurrentTrack] = useState([]);
   const [synth, setSynth] = useState(null);
 
   useEffect(() => {
@@ -115,25 +133,28 @@ const VirtualInstrument = ({ instrumentType }) => {
     if (synth) {
       synth.triggerAttackRelease(note, "8n");
       if (isRecording) {
-        setRecordedNotes([...recordedNotes, note]);
+        setCurrentTrack([...currentTrack, note]);
       }
     }
   };
 
   const startRecording = () => {
     setIsRecording(true);
-    setRecordedNotes([]);
+    setCurrentTrack([]);
   };
 
   const stopRecording = () => {
     setIsRecording(false);
+    setRecordedNotes([...recordedNotes, currentTrack]);
   };
 
   const playRecording = () => {
     if (recordedNotes.length > 0) {
       const now = Tone.now();
-      recordedNotes.forEach((note, index) => {
-        synth.triggerAttackRelease(note, "8n", now + index * 0.5);
+      recordedNotes.forEach((track, trackIndex) => {
+        track.forEach((note, noteIndex) => {
+          synth.triggerAttackRelease(note, "8n", now + noteIndex * 0.5);
+        });
       });
     }
   };
@@ -150,6 +171,7 @@ const VirtualInstrument = ({ instrumentType }) => {
           <Button key={note} onClick={() => playNote(note)}>{note}</Button>
         ))}
       </HStack>
+      <Sequencer tracks={recordedNotes} />
     </VStack>
   );
 };
