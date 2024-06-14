@@ -1,18 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
 import { Box, Button, VStack, HStack, Text, Slider, SliderTrack, SliderFilledTrack, SliderThumb } from '@chakra-ui/react';
-import { FaPlay, FaStop, FaRecordVinyl } from 'react-icons/fa';
+import { FaPlay, FaStop, FaRecordVinyl, FaPause } from 'react-icons/fa';
 
-const Sequencer = ({ tracks }) => {
+const Sequencer = ({ tracks, playheadPosition }) => {
   return (
     <Box>
       {tracks.map((track, index) => (
         <Box key={index} border="1px solid black" p={2} mb={2}>
           <Text>Track {index + 1}</Text>
-          <HStack>
+          <HStack position="relative">
             {track.map((note, noteIndex) => (
               <Box key={noteIndex} w="20px" h="20px" bg={note ? 'blue' : 'gray'} />
             ))}
+            <Box
+              position="absolute"
+              top="0"
+              left={`${playheadPosition * 100}%`}
+              w="2px"
+              h="100%"
+              bg="red"
+              transform="translateX(-50%)"
+              transition="left 0.1s linear"
+            />
           </HStack>
         </Box>
       ))}
@@ -26,8 +36,11 @@ const VirtualInstrument = ({ instrumentType }) => {
   const [currentTrack, setCurrentTrack] = useState([]);
   const [synth, setSynth] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [bpm, setBpm] = useState(120);
+  const [playheadPosition, setPlayheadPosition] = useState(0);
   const metronome = useRef(null);
+  const playheadInterval = useRef(null);
 
   useEffect(() => {
     if (instrumentType === 'piano') {
@@ -176,6 +189,24 @@ const VirtualInstrument = ({ instrumentType }) => {
   const stopMetronome = () => {
     Tone.Transport.stop();
     setIsPlaying(false);
+    setIsPaused(false);
+    stopPlayhead();
+  };
+
+  const pauseMetronome = () => {
+    Tone.Transport.pause();
+    setIsPaused(true);
+    stopPlayhead();
+  };
+
+  const startPlayhead = () => {
+    playheadInterval.current = setInterval(() => {
+      setPlayheadPosition((prev) => (prev + 0.01) % 1);
+    }, (60000 / bpm) / 4);
+  };
+
+  const stopPlayhead = () => {
+    clearInterval(playheadInterval.current);
   };
 
   return (
@@ -190,10 +221,10 @@ const VirtualInstrument = ({ instrumentType }) => {
           <Button key={note} onClick={() => playNote(note)}>{note}</Button>
         ))}
       </HStack>
-      <Sequencer tracks={recordedNotes} />
+      <Sequencer tracks={recordedNotes} playheadPosition={playheadPosition} />
       <HStack spacing={2}>
-        <Button onClick={isPlaying ? stopMetronome : startMetronome} colorScheme="blue">
-          {isPlaying ? 'Stop Metronome' : 'Start Metronome'}
+        <Button onClick={isPlaying ? (isPaused ? startMetronome : pauseMetronome) : startMetronome} colorScheme="blue">
+          {isPlaying ? (isPaused ? 'Resume Metronome' : 'Pause Metronome') : 'Start Metronome'}
         </Button>
         <Slider aria-label="bpm-slider" defaultValue={120} min={60} max={200} onChange={(val) => setBpm(val)}>
           <SliderTrack>
