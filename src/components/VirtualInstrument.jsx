@@ -165,7 +165,10 @@ const VirtualInstrument = ({ instrumentType }) => {
 
   const stopRecording = () => {
     setIsRecording(false);
-    setRecordedNotes([...recordedNotes, currentTrack]);
+    if (currentTrack.length > 0) {
+      setRecordedNotes([...recordedNotes, currentTrack]);
+    }
+    setCurrentTrack([]);
   };
 
   const playRecording = () => {
